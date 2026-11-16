@@ -563,3 +563,13 @@ STATUS: [x] base restored (152 tests green) [ ] E [ ] T [ ] U [ ] V [ ] D
 - Replaced `scipy.stats.norm.cdf/pdf` with `scipy.special.ndtr` + closed-form PDF in `engine/pricing.py`; each CDF is now computed once per call.
 - 400-pt grid: price 0.147 -> 0.041 ms, Greeks 0.279 -> 0.072 ms (~3.6-3.9x). Max abs diff vs prior outputs: 1.1e-15.
 - Added `tests/test_pricing_regression.py` (put-call parity, scipy reference, expiry limit).
+
+## Modernization pass 2
+- Deps bumped & verified (153+ tests, app serves HTTP 200): numpy 2.5.5, scipy 1.18.1, nicegui 4.0.0, pytest 9.2.0. Dropped unused pandas.
+- Fixed startup crash: `ui.components` imported `FlowRow` and the UI called `flow_tape`, neither existed in `engine/market_sim.py`. Implemented both (deterministic, own RNG stream) + test.
+- New `engine/american.py`: vectorized CRR binomial American pricer (continuous yield), early-exercise premium.
+- New `engine/futures.py`: contract registry (ES/MES/NQ/MNQ/RTY/M2K/YM/MYM/ZN/ZB/CL/GC/MGC), tick-exact P&L, fee-adjusted breakeven, margin-call & drawdown price levels, scale-in/out averaging, bracket R:R, roll/carry analysis, calendar spread P&L, Black-76 options on futures + composite P&L.
+- **Margins in the registry are PLACEHOLDERS** (`margin_source="placeholder"`); `update_margins()` is the hook for the live data adapter.
+
+## Not yet done (needs live API keys / UI work)
+Portfolio ledger, UI wiring for futures + American pricing, data-freshness badges, adapters with backoff/caching, perf profiling under tick bursts.

@@ -65,6 +65,25 @@ class UnderlyingSnapshot:
     dividend_yield: float  # decimal, e.g. 0.0 for a non-dividend payer
 
 
+@dataclass(frozen=True)
+class FlowRow:
+    """One cosmetic, SIMULATED 'recent trades' tape row (not real data)."""
+
+    timestamp: str
+    tag: str
+    ticker: str
+    option_type: str  # "CALL" | "PUT"
+    size: int
+    price: float
+    strike: float
+    otm_pct: float
+    open_interest: int
+    implied_vol_pct: float
+    notional: float
+
+
+_FLOW_TAGS = ("SWEEP", "BLOCK", "SPLIT", "ISO")
+
 # A small deterministic pool of plausible company-name suffixes/styles, used
 # only to make the fabricated "company_name" field look sensible for any
 # arbitrary ticker the user types in. This is NOT a real ticker lookup.
@@ -220,3 +239,44 @@ class MarketSimulator:
 
         iv = base + skew_component + term_bump
         return float(np.clip(iv, 0.05, 2.5))
+
+    # -- Flow tape (cosmetic) ----------------------------------------------
+
+    def flow_tape(self, snap: UnderlyingSnapshot, n: int = 8) -> list[FlowRow]:
+        """Deterministic synthetic 'recent trades' rows (decorative only).
+
+        Uses its own RNG stream derived from the simulator seed, so it never
+        perturbs the snapshot or IV surface and is reproducible in tests.
+        """
+        from engine.pricing import bsm_price
+
+        rng = np.random.default_rng(self._seed + 1)
+        rows: list[FlowRow] = []
+        for i in range(max(int(n), 0)):
+            is_call = bool(rng.integers(0, 2))
+            otm = float(rng.uniform(0.0, 0.15))
+            strike = round(snap.price * (1 + otm if is_call else 1 - otm), 0) or 1.0
+            dte = float(rng.choice([7, 14, 30, 45, 60, 90]))
+            iv = self.implied_vol(strike, snap.price, dte)
+            px = float(
+                bsm_price(snap.price, strike, snap.risk_free_rate,
+                          snap.dividend_yield, iv, dte / 365.0,
+                          "call" if is_call else "put")
+            )
+            px = max(round(px, 2), 0.01)
+            size = int(rng.integers(5, 2500))
+            minutes = i * int(rng.integers(1, 6))
+            rows.append(FlowRow(
+                timestamp=f"{9 + (30 + minutes) // 60 % 7:02d}:{(30 + minutes) % 60:02d}:{int(rng.integers(0, 60)):02d}",
+                tag=str(rng.choice(_FLOW_TAGS)),
+                ticker=snap.ticker,
+                option_type="CALL" if is_call else "PUT",
+                size=size,
+                price=px,
+                strike=float(strike),
+                otm_pct=round(otm * 100, 1),
+                open_interest=int(rng.integers(100, 40000)),
+                implied_vol_pct=round(iv * 100, 1),
+                notional=round(size * px * 100, 2),
+            ))
+        return rows

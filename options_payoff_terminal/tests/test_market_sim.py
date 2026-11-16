@@ -99,3 +99,12 @@ def test_implied_vol_skew_shape_otm_puts_richer_than_atm():
     iv_atm = sim.implied_vol(snap.price, snap.price, 30)
     iv_otm_put_side = sim.implied_vol(snap.price * 0.85, snap.price, 30)
     assert iv_otm_put_side > iv_atm
+
+
+def test_flow_tape_deterministic_and_consistent():
+    sim = MarketSimulator("TSLA")
+    snap = sim.snapshot()
+    a, b = sim.flow_tape(snap, n=8), MarketSimulator("TSLA").flow_tape(snap, n=8)
+    assert a == b and len(a) == 8
+    assert all(r.option_type in ("CALL", "PUT") and r.price > 0 and r.size > 0 for r in a)
+    assert sim.snapshot() == snap  # flow draws never perturb the snapshot
