@@ -1,0 +1,20 @@
+[project]
+name = "options-payoff-terminal"
+version = "0.1.0"
+description = "Local-first, simulation-only options strategy payoff visualization terminal (educational tool, no live market data or brokerage connectivity)."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy==2.4.4",
+    "scipy==1.17.1",
+    "pandas==2.2.3",
+    "nicegui==2.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.3",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
