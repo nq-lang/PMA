@@ -36,6 +36,10 @@ def compute_view(
             except ValueError:
                 out["bracket"] = None
     lo, hi = entry * (1 - range_pct), entry * (1 + range_pct)
+    marks = [m for m in (out["liquidation"], stop, target, mark) if m]
+    if marks:  # keep every reference level comfortably inside the plotted range
+        span = max(hi, *marks) - min(lo, *marks)
+        lo, hi = min(lo, *marks) - 0.05 * span, max(hi, *marks) + 0.05 * span
     grid = fut.round_to_tick(np.linspace(lo, hi, n), spec)
     out["grid"], out["pnl"] = grid, pos.pnl(grid, include_fees=True) if qty else np.zeros(n)
     return out
@@ -56,18 +60,22 @@ def _chart_options(v: dict, mark: float, stop, target) -> dict:
     return {
         "backgroundColor": "transparent",
         "animation": False,
-        "grid": {"left": 70, "right": 30, "top": 20, "bottom": 40},
+        "grid": {"left": 70, "right": 30, "top": 70, "bottom": 40},
         "tooltip": {"trigger": "axis", "valueFormatter": None},
         "xAxis": {"type": "value", "min": x[0], "max": x[-1], "scale": True,
-                  "axisLabel": {"color": PALETTE.text_secondary}},
+                  "axisLabel": {"color": PALETTE.text_secondary},
+                  "splitLine": {"show": True, "lineStyle": {"color": PALETTE.border_subtle}}},
         "yAxis": {"type": "value", "axisLabel": {"color": PALETTE.text_secondary},
                   "splitLine": {"lineStyle": {"color": PALETTE.border_subtle}}},
         "series": [{
             "type": "line", "showSymbol": False, "data": list(zip(x, y)),
             "lineStyle": {"color": PALETTE.profit_green, "width": 2},
             "markLine": {"symbol": "none", "silent": True, "data": [
-                {"xAxis": float(px), "label": {"formatter": name, "color": col},
-                 "lineStyle": {"color": col, "type": "dashed"}} for px, name, col in lines
+                {"xAxis": float(px),
+                 "label": {"formatter": f"{name} {px:,.2f}", "color": col,
+                           "position": "end", "offset": [0, 14 * (i % 4)]},
+                 "lineStyle": {"color": col, "type": "dashed"}}
+                for i, (px, name, col) in enumerate(sorted(lines))
             ]},
         }],
     }
@@ -81,6 +89,7 @@ def build_futures_page() -> None:
     with ui.row().classes("w-full items-center gap-4"):
         ui.label("Futures Payoff & Risk").classes("text-xl font-semibold")
         ui.link("← Options payoff", "/")
+        ui.link("Portfolio", "/portfolio")
     badge = ui.label().style(f"color: {PALETTE.text_muted}; font-size: 12px;")
     with ui.row().classes("opt-panel w-full gap-4 items-end flex-wrap"):
         sym = ui.select(sorted(fut.CONTRACTS), value=st["symbol"], label="Contract").classes("w-28")

@@ -579,3 +579,13 @@ Portfolio ledger, UI wiring for futures + American pricing, data-freshness badge
 - `app.py`: headless auto-detection (web mode, no browser launch), binds 0.0.0.0, `PORT` env.
 - New `/futures` page (`ui/futures_page.py`): contract select, tick-exact P&L chart with entry/mark/breakeven/margin-call/stop/target lines, margin & leverage metrics, R:R. Margins labelled PLACEHOLDER on the page.
 - 170 tests passing.
+
+## Pass 4: Portfolio ledger
+- `engine/portfolio.py`: event-driven `Ledger` (ticks, fills with avg-cost/reduce/flip realized P&L, dividends, option expiry, borrow/financing carry), NLV, beta-weighted exposure, grouping (underlying/asset class/sleeve/strategy/expiry), **simplified** margin model (futures from registry placeholders).
+- `engine/portfolio_risk.py`: Sharpe, Sortino, max drawdown, CVaR, correlation/covariance, pre-trade variance + margin-cushion impact, concentration (HHI).
+- `/portfolio` page: SIMULATED demo book with live random-walk ticks, group-by, sign-coloured flat table.
+- Futures chart: non-overlapping level labels, reference levels always in range.
+- Verified in headless Chromium (no console errors, live updates). 179 tests passing.
+
+## Still to do
+Strategy-lifecycle detection (covered call/wheel/collar/rolls), tax lots, correlation/what-if UI, American-exercise toggle in options view, Greeks surface panels, data adapters + freshness badges (need API keys), tick-burst profiling.

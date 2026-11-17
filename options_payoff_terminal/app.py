@@ -29,6 +29,7 @@ from nicegui import ui
 
 from ui.futures_page import build_futures_page
 from ui.layout import build_page
+from ui.portfolio_page import build_portfolio_page
 
 
 @ui.page("/")
@@ -39,6 +40,11 @@ def main_page() -> None:
 @ui.page("/futures")
 def futures_page() -> None:
     build_futures_page()
+
+
+@ui.page("/portfolio")
+def portfolio_page() -> None:
+    build_portfolio_page()
 
 
 def _headless() -> bool:

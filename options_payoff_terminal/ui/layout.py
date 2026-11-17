@@ -140,7 +140,9 @@ def build_page(state: AppState | None = None) -> None:
         return wrapper
 
     # ------------------------------------------------------------------ layout
-    ui.link("Futures payoff & risk →", "/futures")
+    with ui.row().classes("gap-4"):
+        ui.link("Futures payoff & risk →", "/futures")
+        ui.link("Portfolio →", "/portfolio")
     header_container = ui.column().classes("w-full gap-3")
     dialog_host = ui.element("div")
     with ui.row().classes("w-full gap-4 items-start flex-wrap lg:flex-nowrap"):
