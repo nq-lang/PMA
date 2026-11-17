@@ -245,3 +245,11 @@ real financial account numbers, positions, or credentials. No reproduction
 of any vendor's copyrighted UI assets, icons, logos, or exact brand color
 values. No investment-advice language anywhere in the UI — every output is
 framed as educational/simulated.
+
+## Running in GitHub Codespaces / VS Code Dev Containers
+Opening the repo in a Codespace builds the container (`.devcontainer/devcontainer.json`), installs
+`requirements.txt`, and on attach runs `scripts/start_server.sh`, which starts the web server in the
+background on port **8080** (auto-forwarded and opened in VS Code's preview). Pages: `/` options
+payoff, `/futures` futures payoff & risk. Restart any time with
+`bash options_payoff_terminal/scripts/start_server.sh`; log at `/tmp/pma-server.log`.
+Headless environments (Codespaces, containers, no `$DISPLAY`) automatically use browser mode; set `PORT` to change the port.

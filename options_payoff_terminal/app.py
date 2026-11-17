@@ -22,10 +22,12 @@ connectivity and uses no real market data -- every price, quote, and
 
 from __future__ import annotations
 
+import os
 import sys
 
 from nicegui import ui
 
+from ui.futures_page import build_futures_page
 from ui.layout import build_page
 
 
@@ -34,16 +36,31 @@ def main_page() -> None:
     build_page()
 
 
+@ui.page("/futures")
+def futures_page() -> None:
+    build_futures_page()
+
+
+def _headless() -> bool:
+    """True in Codespaces/containers/CI where a native window cannot open."""
+    return bool(os.environ.get("CODESPACES") or os.environ.get("REMOTE_CONTAINERS")
+                or (sys.platform.startswith("linux") and not os.environ.get("DISPLAY")
+                    and not os.environ.get("WAYLAND_DISPLAY")))
+
+
 def run() -> None:
-    native_mode = "--web" not in sys.argv
+    native_mode = "--web" not in sys.argv and not _headless()
+    port = int(os.environ.get("PORT", "8080"))
     try:
         ui.run(
             title="Options Strategy Payoff Terminal",
             native=native_mode,
             window_size=(1440, 900) if native_mode else None,
             reload=False,
-            port=8080,
+            host="0.0.0.0",
+            port=port,
             dark=True,
+            show=not _headless(),
         )
     except Exception as exc:  # noqa: BLE001
         if native_mode:
@@ -56,8 +73,10 @@ def run() -> None:
                 title="Options Strategy Payoff Terminal",
                 native=False,
                 reload=False,
-                port=8080,
+                host="0.0.0.0",
+                port=port,
                 dark=True,
+                show=not _headless(),
             )
         else:
             raise

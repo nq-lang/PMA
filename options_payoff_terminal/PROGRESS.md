@@ -573,3 +573,9 @@ STATUS: [x] base restored (152 tests green) [ ] E [ ] T [ ] U [ ] V [ ] D
 
 ## Not yet done (needs live API keys / UI work)
 Portfolio ledger, UI wiring for futures + American pricing, data-freshness badges, adapters with backoff/caching, perf profiling under tick bursts.
+
+## Pass 3: Codespaces + futures page
+- `.devcontainer/` + `scripts/start_server.sh`: auto-start server on attach, port 8080 forwarded with preview.
+- `app.py`: headless auto-detection (web mode, no browser launch), binds 0.0.0.0, `PORT` env.
+- New `/futures` page (`ui/futures_page.py`): contract select, tick-exact P&L chart with entry/mark/breakeven/margin-call/stop/target lines, margin & leverage metrics, R:R. Margins labelled PLACEHOLDER on the page.
+- 170 tests passing.
