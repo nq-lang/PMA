@@ -25,3 +25,9 @@ def test_ticks_emit_only_changed_and_nlv_tracks():
 def test_money_format():
     from ui.portfolio_page import money
     assert money(-69331.2) == "-$69,331" and money(1234.5, 2) == "$1,234.50"
+
+
+def test_thread_rows_demo_wheel():
+    from ui.portfolio_page import demo_fills, thread_rows
+    (r,) = thread_rows(demo_fills(), "2026-11-17", {("stock",): 50.0})
+    assert r["name"] == "DEMO · Covered call" and r["rolls"] == 1 and r["basis"] == "46.00"

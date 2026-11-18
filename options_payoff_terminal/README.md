@@ -247,9 +247,14 @@ values. No investment-advice language anywhere in the UI — every output is
 framed as educational/simulated.
 
 ## Running in GitHub Codespaces / VS Code Dev Containers
-Opening the repo in a Codespace builds the container (`.devcontainer/devcontainer.json`), installs
-`requirements.txt`, and on attach runs `scripts/start_server.sh`, which starts the web server in the
-background on port **8080** (auto-forwarded and opened in VS Code's preview). Pages: `/` options
-payoff, `/futures` futures payoff & risk. Restart any time with
-`bash options_payoff_terminal/scripts/start_server.sh`; log at `/tmp/pma-server.log`.
-Headless environments (Codespaces, containers, no `$DISPLAY`) automatically use browser mode; set `PORT` to change the port.
+The server starts as early as the platform allows and stays up:
+- `postStartCommand` (every container start/resume) runs `scripts/start_server.sh`, before VS Code attaches.
+- `postAttachCommand` runs `start_server.sh --ensure` (no-op if already healthy).
+- `.vscode/tasks.json` runs the same ensure step on folder open as a third safety net.
+- The server runs under `scripts/run_supervised.sh`, which restarts it within ~2s if it ever crashes.
+- Port **8080** is forwarded and opened in VS Code's preview. Pages: `/` options payoff, `/futures`, `/portfolio`.
+
+Manual restart: `bash options_payoff_terminal/scripts/start_server.sh` (log: `/tmp/pma-server.log`).
+Headless environments use browser mode automatically; set `PORT` to change the port.
+Note: a Codespace that is *stopped* (idle timeout, default 30 min) cannot serve; it comes back
+on resume. Raise the idle timeout in GitHub -> Settings -> Codespaces if you want it up longer.

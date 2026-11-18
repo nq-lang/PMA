@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from nicegui import ui
 
+from engine.pricing import exercise_style
 from engine.market_sim import MarketSimulator, UnderlyingSnapshot
 from engine.payoff import (
     asof_payoff, compute_stats, expiration_payoff, find_breakevens, price_grid, price_legs,
@@ -45,6 +46,7 @@ EXPIRATION_PRESETS = [7, 14, 30, 45, 60, 90, 180, 365]
 class AppState:
     ticker: str = DEFAULT_TICKER
     strategy_name: str = DEFAULT_STRATEGY
+    american: bool = False
     strike_increment: float = DEFAULT_STRIKE_INCREMENT
     dte_days: float = DEFAULT_DTE_DAYS
     price_range_pct: float = DEFAULT_PRICE_RANGE_PCT
@@ -172,6 +174,7 @@ def build_page(state: AppState | None = None) -> None:
                                          step=0.1, format="%.3f").props("dense outlined").style("width: 170px;")
                         q_in = ui.number("Dividend yield (%)", value=round(state.div_yield * 100, 3),
                                          step=0.1, format="%.3f").props("dense outlined").style("width: 170px;")
+                        amer_sw = ui.switch("American exercise (binomial)", value=state.american)
                         ui.label("Overrides the simulated rates used for pricing and Greeks."
                                  ).style(f"color:{PALETTE.text_muted}; font-size:11px;")
 
@@ -217,6 +220,10 @@ def build_page(state: AppState | None = None) -> None:
                 flow_row(row)
 
     def refresh() -> None:
+        with exercise_style("american" if state.american else "european"):
+            _refresh()
+
+    def _refresh() -> None:
         state.ensure_simulator()
         spot, r, q = state.snapshot.price, state.rate, state.div_yield
         iv_fn = state.scaled_iv_fn()
@@ -363,6 +370,10 @@ def build_page(state: AppState | None = None) -> None:
         state.q_override = None if e.value is None else float(e.value) / 100.0
         refresh()
 
+    def on_american(e):
+        state.american = bool(e.value)
+        refresh()
+
     def on_ruler_drag(e):
         idx, strike = int(e.args["idx"]), float(e.args["strike"])
         if 0 <= idx < len(state.legs):
@@ -441,6 +452,7 @@ def build_page(state: AppState | None = None) -> None:
     view_tabs.on_value_change(guarded(on_tab))
     r_in.on_value_change(guarded(on_rate))
     q_in.on_value_change(guarded(on_div))
+    amer_sw.on_value_change(guarded(on_american))
     ui.on("ruler_drag", on_ruler_drag)
 
     refresh_flow()

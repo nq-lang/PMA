@@ -589,3 +589,9 @@ Portfolio ledger, UI wiring for futures + American pricing, data-freshness badge
 
 ## Still to do
 Strategy-lifecycle detection (covered call/wheel/collar/rolls), tax lots, correlation/what-if UI, American-exercise toggle in options view, Greeks surface panels, data adapters + freshness badges (need API keys), tick-burst profiling.
+
+## Pass 5: always-on server, American toggle, lifecycle
+- Codespaces: `postStartCommand` + supervised server (auto-restart, verified by killing the process) + `--ensure` on attach + folder-open task.
+- American exercise toggle in the options view (Advanced panel). `engine.pricing.exercise_style` is a contextvar, so concurrent sessions don't interfere; no-dividend calls use the exact closed form; 80-step CRR tree otherwise. Greeks remain European BSM.
+- `engine/lifecycle.py`: fills -> position threads; covered call / CSP / collar / protective put / wheel detection, roll credit-debit pairing, adjusted cost basis, annualized return on peak capital. Fixed thread-splitting on same-day assignment.
+- Portfolio page shows a simulated wheel thread. 189 tests passing.

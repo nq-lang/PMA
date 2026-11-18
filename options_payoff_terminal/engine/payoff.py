@@ -42,7 +42,7 @@ import numpy as np
 from scipy import optimize
 from scipy.stats import norm
 
-from engine.pricing import Greeks, bsm_greeks, bsm_price
+from engine.pricing import Greeks, bsm_greeks, bsm_price, option_price
 from engine.strategies import Leg
 
 CONTRACT_MULTIPLIER = 100.0
@@ -66,7 +66,7 @@ def leg_entry_price(
     if leg.kind == "stock":
         return spot
     T = leg_dte_years(leg.dte_days)
-    return float(bsm_price(spot, leg.strike, r, q, iv, T, leg.kind))
+    return float(option_price(spot, leg.strike, r, q, iv, T, leg.kind))
 
 
 def leg_price_at(
@@ -86,7 +86,7 @@ def leg_price_at(
         return np.asarray(S, dtype=float)
     T_remaining_days = max(leg.dte_days - days_elapsed, 0.0)
     T = leg_dte_years(T_remaining_days)
-    return bsm_price(S, leg.strike, r, q, iv, T, leg.kind)
+    return option_price(S, leg.strike, r, q, iv, T, leg.kind)
 
 
 @dataclass

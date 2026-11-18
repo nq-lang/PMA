@@ -1,22 +1,31 @@
 {
-  "name": "PMA – Options & Futures Payoff Terminal",
+  "name": "PMA \u2013 Options & Futures Payoff Terminal",
   "image": "mcr.microsoft.com/devcontainers/python:3.12",
-  "forwardPorts": [8080],
+  "forwardPorts": [
+    8080
+  ],
   "portsAttributes": {
     "8080": {
       "label": "PMA Terminal",
-      "onAutoForward": "openPreview"
+      "onAutoForward": "openPreview",
+      "protocol": "http"
     }
   },
   "postCreateCommand": "pip install --upgrade pip && pip install -r options_payoff_terminal/requirements.txt",
-  "postAttachCommand": "bash options_payoff_terminal/scripts/start_server.sh",
+  "postAttachCommand": "bash options_payoff_terminal/scripts/start_server.sh --ensure",
   "customizations": {
     "vscode": {
-      "extensions": ["ms-python.python", "ms-python.vscode-pylance"],
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ],
       "settings": {
-        "python.testing.pytestArgs": ["options_payoff_terminal/tests"],
+        "python.testing.pytestArgs": [
+          "options_payoff_terminal/tests"
+        ],
         "python.testing.pytestEnabled": true
       }
     }
-  }
+  },
+  "postStartCommand": "bash options_payoff_terminal/scripts/start_server.sh"
 }

@@ -278,3 +278,35 @@ def bsm_greeks(
             rho=float(rho),
         )
     return Greeks(delta=delta, gamma=gamma, vega=vega, theta=theta, rho=rho)
+
+
+# --- Exercise-style dispatch (context-scoped, safe across concurrent sessions) ---
+import contextlib as _contextlib
+import contextvars as _contextvars
+
+_EXERCISE: _contextvars.ContextVar[str] = _contextvars.ContextVar("exercise_style", default="european")
+AMERICAN_TREE_STEPS = 80  # interactive default; use engine.american directly for more
+
+
+@_contextlib.contextmanager
+def exercise_style(style: str):
+    """``with exercise_style("american"): ...`` prices options via ``option_price``
+    with early exercise inside the block only."""
+    if style not in ("european", "american"):
+        raise ValueError("style must be 'european' or 'american'")
+    token = _EXERCISE.set(style)
+    try:
+        yield
+    finally:
+        _EXERCISE.reset(token)
+
+
+def option_price(S, K, r, q, sigma, T, option_type: OptionType):
+    """BSM, or CRR American when the active style is 'american' and T > 0.
+
+    American calls with q <= 0 are never exercised early, so they use the
+    exact BSM value (fast path)."""
+    if _EXERCISE.get() == "american" and T > 0 and not (option_type == "call" and q <= 0):
+        from engine.american import american_price
+        return american_price(S, K, r, q, sigma, T, option_type, steps=AMERICAN_TREE_STEPS)
+    return bsm_price(S, K, r, q, sigma, T, option_type)

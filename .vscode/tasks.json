@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PMA: ensure server running",
+      "type": "shell",
+      "command": "bash options_payoff_terminal/scripts/start_server.sh --ensure",
+      "runOptions": { "runOn": "folderOpen" },
+      "presentation": { "reveal": "silent", "close": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "PMA: restart server",
+      "type": "shell",
+      "command": "bash options_payoff_terminal/scripts/start_server.sh",
+      "problemMatcher": []
+    }
+  ]
+}

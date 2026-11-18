@@ -13,6 +13,7 @@ from __future__ import annotations
 import numpy as np
 from nicegui import ui
 
+from engine.lifecycle import Fill, build_threads
 from engine.portfolio import Holding, Ledger
 from engine import portfolio_risk as pr
 from ui.theme import GLOBAL_CSS, PALETTE
@@ -24,6 +25,29 @@ SIM_PRICES = {"AAPL": 190.0, "MSFT": 420.0, "SPY": 520.0, "QQQ": 450.0, "ES": 52
 def money(x: float, decimals: int = 0) -> str:
     """-$1,234 (sign before the symbol)."""
     return f"{'-' if x < 0 else ''}${abs(x):,.{decimals}f}"
+
+
+def demo_fills() -> list[Fill]:
+    """SIMULATED wheel history on a fictional ticker (CSP -> assignment -> rolled covered call)."""
+    u = "DEMO"
+    return [
+        Fill("2026-09-08", u, "put", -1, 2.00, 50, "2026-10-02"),
+        Fill("2026-10-02", u, "put", 1, 0.0, 50, "2026-10-02", note="assigned"),
+        Fill("2026-10-02", u, "stock", 100, 50.0, note="assigned"),
+        Fill("2026-10-05", u, "call", -1, 1.50, 52, "2026-10-30"),
+        Fill("2026-10-28", u, "call", 1, 2.50, 52, "2026-10-30"),
+        Fill("2026-10-28", u, "call", -1, 3.00, 54, "2026-11-20"),
+    ]
+
+
+def thread_rows(fills: list[Fill], as_of: str, marks: dict | None = None) -> list[dict]:
+    out = []
+    for t in build_threads(fills):
+        basis, ar = t.adjusted_cost_basis(), t.annualized_return(as_of, marks)
+        out.append({"name": f"{t.underlying} · {t.archetype}", "start": t.start, "end": t.end or "open",
+                    "basis": "-" if basis is None else f"{basis:,.2f}", "rolls": len(t.rolls),
+                    "pnl": round(t.net_pnl(marks), 2), "ann": "-" if ar is None else f"{ar:.1%}"})
+    return out
 
 
 def build_demo_ledger() -> Ledger:
@@ -81,6 +105,14 @@ def build_portfolio_page() -> None:
              "Margin is a simplified model.").style(f"color: {PALETTE.warning}; font-size: 12px;")
 
     stats = ui.row().classes("opt-panel w-full gap-6 flex-wrap")
+    ui.label("Strategy threads (simulated wheel history)").style(f"color: {PALETTE.text_muted}; font-size: 12px;")
+    tcols = [{"name": k, "label": l, "field": k, "align": a} for k, l, a in [
+        ("name", "Thread", "left"), ("start", "Start", "left"), ("end", "End", "left"),
+        ("basis", "Adj. basis / sh", "right"), ("rolls", "Rolls", "right"),
+        ("pnl", "Net P&L $", "right"), ("ann", "Annualized ROC", "right")]]
+    ui.table(columns=tcols, rows=thread_rows(demo_fills(), "2026-11-17",
+             {("stock",): 50.0}), row_key="name").props("flat dense dark").style(
+        "background: transparent; box-shadow: none; font-variant-numeric: tabular-nums;").classes("w-full")
     with ui.row().classes("w-full items-center gap-4"):
         grp = ui.select(GROUPS, value="(none)", label="Group by").classes("w-44")
         run = ui.switch("Simulate ticks", value=True)
